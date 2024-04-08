@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import warnings
 from collections.abc import MutableMapping
 from typing import Any, TypeVar
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, TypeAdapter, model_serializer, model_validator
 from pydantic._internal._model_construction import ModelMetaclass
-from pydantic_core import SchemaSerializer
 
 from pydantic_discriminator.common import DiscriminatedBase, Naming
 
@@ -24,36 +22,6 @@ class DiscriminatedMeta(ModelMetaclass):
 
 
 _T = TypeVar("_T", bound="DiscriminatedBaseModel")
-
-
-old_to_python = SchemaSerializer.to_python
-
-
-def _new_to_python(ss_self, v_self, *args, **kwargs):
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        res = old_to_python(ss_self, v_self, *args, **kwargs)
-
-    if isinstance(v_self, BaseModel):
-        for k in v_self.model_fields.keys():
-            fval = getattr(v_self, k)
-            res[k] = _new_to_python(ss_self, fval, *args, **kwargs)
-    if isinstance(res, dict):
-        if Naming.TYPE_FIELD_NAME in res:
-            res[Naming.TYPE_FIELD_ALIAS] = res.pop(Naming.TYPE_FIELD_NAME)
-        for k, v in res.items():
-            res[k] = _new_to_python(ss_self, v, *args, **kwargs)
-    elif isinstance(res, list):
-        for i, v in enumerate(res):
-            res[i] = _new_to_python(ss_self, v, *args, **kwargs)
-    elif isinstance(res, tuple):
-        res = tuple(_new_to_python(ss_self, v, *args, **kwargs) for v in res)
-
-    return res
-
-
-if SchemaSerializer.to_python is not _new_to_python:  # pragma: no branch
-    setattr(SchemaSerializer, "to_python", _new_to_python)
 
 
 class DiscriminatedBaseModel(
@@ -88,6 +56,14 @@ class DiscriminatedBaseModel(
         if Naming.TYPE_FIELD_ALIAS not in v:
             v[Naming.TYPE_FIELD_ALIAS] = cls.discriminator()
         return v
+
+    @model_serializer
+    def serializer(self):
+        # since we cannot call model_dump() to avoid a RecursionError
+        return self._validate_type_field({
+            key: TypeAdapter(field_info.annotation).validate_python(self.__dict__[key])
+            for key, field_info in self.model_fields.items()
+        })
 
     @classmethod
     def model_validate(
