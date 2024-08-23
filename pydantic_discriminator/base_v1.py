@@ -42,18 +42,18 @@ class DiscriminatedBaseModel(
         other_cls = registry[kwargs[Naming.TYPE_FIELD_ALIAS]]
         return other_cls.__new__(other_cls, *args, **kwargs)  # type: ignore
 
-    def dict(self, *args, **kwargs) -> dict:
-        super_dict = super().dict(*args, **kwargs)
-        super_dict[Naming.TYPE_FIELD_ALIAS] = super_dict.pop(Naming.TYPE_FIELD_NAME)
-        return super_dict
+    #def dict(self, *args, **kwargs) -> dict:
+    #    super_dict = super().dict(*args, **kwargs)
+    #    super_dict[Naming.TYPE_FIELD_ALIAS] = super_dict.pop(Naming.TYPE_FIELD_NAME)
+    #    return super_dict
 
-    @root_validator(pre=True)
-    def _validate_type_field(cls, v):
-        if Naming.TYPE_FIELD_NAME in v:
-            v[Naming.TYPE_FIELD_ALIAS] = v.pop(Naming.TYPE_FIELD_NAME)
-        if Naming.TYPE_FIELD_ALIAS not in v:
-            v[Naming.TYPE_FIELD_ALIAS] = cls.discriminator()
-        return v
+    #@root_validator(pre=True)
+    #def _validate_type_field(cls, v):
+    #    if Naming.TYPE_FIELD_NAME in v:
+    #        v[Naming.TYPE_FIELD_ALIAS] = v.pop(Naming.TYPE_FIELD_NAME)
+    #    if Naming.TYPE_FIELD_ALIAS not in v:
+    #        v[Naming.TYPE_FIELD_ALIAS] = cls.discriminator()
+    #    return v
 
     @classmethod
     def parse_obj(cls: type[_T], obj: Any) -> _T:
