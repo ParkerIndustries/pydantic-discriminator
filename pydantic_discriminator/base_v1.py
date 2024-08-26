@@ -42,10 +42,10 @@ class DiscriminatedBaseModel(
         other_cls = registry[kwargs[Naming.TYPE_FIELD_ALIAS]]
         return other_cls.__new__(other_cls, *args, **kwargs)  # type: ignore
 
-    #def dict(self, *args, **kwargs) -> dict:
-    #    super_dict = super().dict(*args, **kwargs)
+    def dict(self, *args, **kwargs) -> dict:
+        super_dict = super().dict(*args, **kwargs)
     #    super_dict[Naming.TYPE_FIELD_ALIAS] = super_dict.pop(Naming.TYPE_FIELD_NAME)
-    #    return super_dict
+        return super_dict
 
     #@root_validator(pre=True)
     #def _validate_type_field(cls, v):
