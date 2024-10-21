@@ -13,6 +13,9 @@ class Shape(DiscriminatedBaseModel):
     position: tuple[float, float]
 
 
+class Foo(DiscriminatedBaseModel): ...
+
+
 class Circle(Shape, discriminator="circle"):
     radius: float
 
@@ -496,6 +499,12 @@ def test_fail_unknown_discriminator():
     with pytest.raises(ValueError):
         Shape(type="triangle", position=(0.0, 0.0))
 
+def test_dict_includes_type_alias():
+    foo_instance = Foo(type_='foo')
+    result_dict = foo_instance.dict(by_alias=True)
+    assert 'type_' not in result_dict
+    assert 'type' in result_dict
+    assert result_dict['type'] == 'foo'    
 
 def test_fail_wrong_discriminator():
     with pytest.raises(ValueError):
