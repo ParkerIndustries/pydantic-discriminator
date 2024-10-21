@@ -44,7 +44,8 @@ class DiscriminatedBaseModel(
 
     def dict(self, *args, **kwargs) -> dict:
         super_dict = super().dict(*args, **kwargs)
-        super_dict[Naming.TYPE_FIELD_ALIAS] = super_dict.pop(Naming.TYPE_FIELD_NAME)
+        if Naming.TYPE_FIELD_NAME in super_dict:
+            super_dict[Naming.TYPE_FIELD_ALIAS] = super_dict.pop(Naming.TYPE_FIELD_NAME)
         return super_dict
 
     @root_validator(pre=True)
