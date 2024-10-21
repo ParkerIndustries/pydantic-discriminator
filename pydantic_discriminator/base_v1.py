@@ -44,7 +44,7 @@ class DiscriminatedBaseModel(
 
     def dict(self, *args, **kwargs) -> dict:
         super_dict = super().dict(*args, **kwargs)
-        if Naming.TYPE_FIELD_NAME in super_dict:
+        if not Naming.TYPE_FIELD_ALIAS in super_dict:
             super_dict[Naming.TYPE_FIELD_ALIAS] = super_dict.pop(Naming.TYPE_FIELD_NAME)
         return super_dict
 
