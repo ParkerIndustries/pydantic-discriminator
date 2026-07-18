@@ -7,7 +7,7 @@ on:
 
 jobs:
   release:
-    uses: ParkerIndustries/workflows/.github/workflows/release.yml@v1
+    uses: ParkerIndustries/workflows/.github/workflows/release.yml@v2
     with:
       pypi-package-name: parker-pydantic-discriminator
       python-version: "3.12"
@@ -28,3 +28,25 @@ jobs:
       # If this project publishes docs, set docs-url to add "New/Updated Documentation"
       # sections (linking changed docs/**.md pages) to the release changelog:
       # docs-url: https://your-project.example.com
+
+  # PyPI publish runs HERE, in the caller — Trusted Publishing can't match a reusable workflow.
+  # It downloads the dist-* artifact the reusable workflow built and runs after it (so the tag +
+  # GitHub release are already made; publish is the final step).
+  publish-pypi:
+    name: Publish to PyPI
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: https://pypi.org/p/parker-pydantic-discriminator
+    permissions:
+      id-token: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          merge-multiple: true
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
