@@ -7,7 +7,7 @@ on:
 
 jobs:
   release:
-    uses: ParkerIndustries/workflows/.github/workflows/release.yml@v2
+    uses: ParkerIndustries/workflows/.github/workflows/release.yml@v1
     with:
       pypi-package-name: parker-pydantic-discriminator
       python-version: "3.12"
