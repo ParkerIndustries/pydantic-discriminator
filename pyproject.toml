@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Pydantic discriminators for polymorphic models"
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = ["pydantic>=1.10,<3.0", "packaging"]
 authors = [{ name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" }]
 maintainers = [{ name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" }]
@@ -21,7 +21,7 @@ Repository = "https://github.com/ParkerIndustries/pydantic-discriminator"
 dev = [
     "poethepoet (>=0.36.0,<1.0.0)",
     "ruff",
-    "pytest",
+    "pytest>=9.0.3",
     "pytest-cov",
     "deepdiff",
 ]
