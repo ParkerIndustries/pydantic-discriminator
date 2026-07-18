@@ -6,6 +6,4 @@ if parse(pyd.__version__).major < 2:
 elif parse(pyd.__version__).major < 3:
     from pydantic_discriminator.base_v2 import DiscriminatedBaseModel
 else:
-    raise NotImplementedError(
-        f"pydantic-discriminator does not support pydantic {pyd.__version__}"
-    )
+    raise NotImplementedError(f"pydantic-discriminator does not support pydantic {pyd.__version__}")

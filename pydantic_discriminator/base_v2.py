@@ -24,9 +24,7 @@ class DiscriminatedMeta(ModelMetaclass):
 _T = TypeVar("_T", bound="DiscriminatedBaseModel")
 
 
-class DiscriminatedBaseModel(
-    BaseModel, DiscriminatedBase[BaseModel], metaclass=DiscriminatedMeta
-):
+class DiscriminatedBaseModel(BaseModel, DiscriminatedBase[BaseModel], metaclass=DiscriminatedMeta):
     type_: str = Field(alias=Naming.TYPE_FIELD_ALIAS, description="The type of model.")
 
     def __new__(cls: type[_T], *args, **kwargs) -> _T:
@@ -37,9 +35,7 @@ class DiscriminatedBaseModel(
             return super().__new__(cls)  # type: ignore
         registry = cls.get_registry_recur()
         if kwargs[Naming.TYPE_FIELD_ALIAS] not in registry:
-            raise ValueError(
-                f"Unknown discriminator {kwargs[Naming.TYPE_FIELD_ALIAS]} for {cls}"
-            )
+            raise ValueError(f"Unknown discriminator {kwargs[Naming.TYPE_FIELD_ALIAS]} for {cls}")
         other_cls = registry[kwargs[Naming.TYPE_FIELD_ALIAS]]
         return other_cls.__new__(other_cls, *args, **kwargs)  # type: ignore
 
@@ -60,10 +56,12 @@ class DiscriminatedBaseModel(
     @model_serializer
     def serializer(self):
         # since we cannot call model_dump() to avoid a RecursionError
-        return self._validate_type_field({
-            key: TypeAdapter(field_info.annotation).validate_python(self.__dict__[key])
-            for key, field_info in self.model_fields.items()
-        })
+        return self._validate_type_field(
+            {
+                key: TypeAdapter(field_info.annotation).validate_python(self.__dict__[key])
+                for key, field_info in self.model_fields.items()
+            }
+        )
 
     @classmethod
     def model_validate(
@@ -76,6 +74,4 @@ class DiscriminatedBaseModel(
     ) -> _T:
         if isinstance(obj, MutableMapping) and Naming.TYPE_FIELD_NAME in obj:
             obj[Naming.TYPE_FIELD_ALIAS] = obj.pop(Naming.TYPE_FIELD_NAME)
-        return super().model_validate(
-            obj, strict=strict, from_attributes=from_attributes, context=context
-        )
+        return super().model_validate(obj, strict=strict, from_attributes=from_attributes, context=context)

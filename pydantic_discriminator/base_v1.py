@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field, root_validator
@@ -23,9 +24,7 @@ class DiscriminatedMeta(ModelMetaclass):
 _T = TypeVar("_T", bound="DiscriminatedBaseModel")
 
 
-class DiscriminatedBaseModel(
-    BaseModel, DiscriminatedBase[BaseModel], metaclass=DiscriminatedMeta
-):
+class DiscriminatedBaseModel(BaseModel, DiscriminatedBase[BaseModel], metaclass=DiscriminatedMeta):
     type_: str = Field(alias=Naming.TYPE_FIELD_ALIAS, description="The type of model.")
 
     def __new__(cls: type[_T], *args, **kwargs) -> _T:
@@ -36,15 +35,13 @@ class DiscriminatedBaseModel(
             return super().__new__(cls)  # type: ignore
         registry = cls.get_registry_recur()
         if kwargs[Naming.TYPE_FIELD_ALIAS] not in registry:
-            raise ValueError(
-                f"Unknown discriminator {kwargs[Naming.TYPE_FIELD_ALIAS]} for {cls}"
-            )
+            raise ValueError(f"Unknown discriminator {kwargs[Naming.TYPE_FIELD_ALIAS]} for {cls}")
         other_cls = registry[kwargs[Naming.TYPE_FIELD_ALIAS]]
         return other_cls.__new__(other_cls, *args, **kwargs)  # type: ignore
 
     def dict(self, *args, **kwargs) -> dict:
         super_dict = super().dict(*args, **kwargs)
-        if not Naming.TYPE_FIELD_ALIAS in super_dict:
+        if Naming.TYPE_FIELD_ALIAS not in super_dict:
             super_dict[Naming.TYPE_FIELD_ALIAS] = super_dict.pop(Naming.TYPE_FIELD_NAME)
         return super_dict
 
@@ -58,10 +55,8 @@ class DiscriminatedBaseModel(
     def parse_obj(cls: type[_T], obj: Any) -> _T:
         obj = cls._enforce_dict_if_root(obj)
         if not isinstance(obj, dict):
-            try:
+            with contextlib.suppress(TypeError, ValueError):
                 obj = dict(obj)
-            except (TypeError, ValueError) as e:
-                pass
         if isinstance(obj, dict) and Naming.TYPE_FIELD_NAME in obj:
             obj[Naming.TYPE_FIELD_ALIAS] = obj.pop(Naming.TYPE_FIELD_NAME)
         return super().parse_obj(obj)

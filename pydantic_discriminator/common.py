@@ -19,18 +19,15 @@ T = TypeVar("T")
 class Discriminated(ABC, Generic[T]):
     @classmethod
     @abstractmethod
-    def discriminator(cls) -> str:
-        ...
+    def discriminator(cls) -> str: ...
 
     @classmethod
     @abstractmethod
-    def get_registry(cls) -> MutableMapping[str, type[T]]:
-        ...
+    def get_registry(cls) -> MutableMapping[str, type[T]]: ...
 
     @classmethod
     @abstractmethod
-    def get_registry_recur(cls) -> Mapping[str, type[T]]:
-        ...
+    def get_registry_recur(cls) -> Mapping[str, type[T]]: ...
 
 
 class DiscriminatedBase(Discriminated[T]):

@@ -1,37 +1,100 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
 name = "pydantic-discriminator"
 version = "0.1.0"
-dependencies = ["pydantic>=1.10,<3.0", "packaging"]
-requires-python = ">=3.9"
-authors = [{ name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" }]
-maintainers = [
-    { name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" },
-]
 description = "Pydantic discriminators for polymorphic models"
 readme = "README.md"
 license = { file = "LICENSE" }
+requires-python = ">=3.9"
+dependencies = ["pydantic>=1.10,<3.0", "packaging"]
+authors = [{ name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" }]
+maintainers = [{ name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" }]
 keywords = ["pydantic", "discriminator", "polymorphism"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python",
 ]
 
-# Optional dependencies
-[project.optional-dependencies]
+[project.urls]
+Repository = "https://github.com/ParkerIndustries/pydantic-discriminator"
+
+[dependency-groups]
 dev = [
-    "black",
-    "flake8",
+    "poethepoet (>=0.36.0,<1.0.0)",
+    "ruff",
     "pytest",
     "pytest-cov",
-    "build",
     "deepdiff",
-    "tox",
-    "tox-conda",
 ]
 
-[project.urls]
-Repository = "https://github.com/lucabonfiglioli/pydantic-discriminator"
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+packages = [{ include = "pydantic_discriminator" }]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+filterwarnings = ["once"]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I",   # isort
+]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = true
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["E402"]
+
+[tool.poe.tasks.install]
+shell = """
+poetry install
+echo '#!/bin/sh\npoetry run poe check' > .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+echo "Pre-commit hook installed."
+"""
+
+[tool.poe.tasks.check]
+shell = """
+code=0
+
+echo "\nRunning ruff lint:"
+poetry run ruff check --fix || code=1
+
+echo "\nRunning ruff format:"
+poetry run ruff format || code=1
+
+echo "\nRunning pytest:"
+poetry run pytest --cov=pydantic_discriminator --cov-report=xml || code=1
+
+echo "\nRunning poetry build:"
+poetry build || code=1
+
+echo "\nRunning poetry check:"
+poetry check || code=1
+
+${ci:+git diff --exit-code}
+
+exit $code
+"""
+args = [{ name = "ci", type = "boolean" }]

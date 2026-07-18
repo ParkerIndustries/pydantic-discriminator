@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import pytest
 from deepdiff import DeepDiff
+from pydantic import BaseModel  # noqa: F401 — referenced only inside exec(code) test strings
 
 # This import is necessary for the test to pass.
-from pydantic import BaseModel
-
 from pydantic_discriminator import DiscriminatedBaseModel
 
 
@@ -488,10 +487,14 @@ expected = Client(
     ],
 )
 def test_discriminated_base_model(parse_fn, dump_fn, code, dict_data):
-    exec(code)
-    client_cls = locals()["expected"].__class__
+    # Run the code string in an explicit namespace (seeded with this module's globals so it can
+    # see BaseModel, Animal, Cat, …). The old `exec(code); locals()["expected"]` pattern relied on
+    # exec writing into a function's live locals — CPython 3.13 (PEP 667) no longer reflects that.
+    ns = dict(globals())
+    exec(code, ns)
+    client_cls = ns["expected"].__class__
     example = parse_fn(client_cls)(dict_data)
-    assert example == locals()["expected"]
+    assert example == ns["expected"]
     assert not DeepDiff(dump_fn(example)(), dict_data, ignore_order=True)
 
 
@@ -499,12 +502,14 @@ def test_fail_unknown_discriminator():
     with pytest.raises(ValueError):
         Shape(type="triangle", position=(0.0, 0.0))
 
+
 def test_dict_include_type_alias():
-    foo_instance = Foo(type_='foo')
+    foo_instance = Foo(type_="foo")
     result_dict = foo_instance.dict(by_alias=True)
-    assert 'type_' not in result_dict
-    assert 'type' in result_dict
-    assert result_dict['type'] == 'foo'    
+    assert "type_" not in result_dict
+    assert "type" in result_dict
+    assert result_dict["type"] == "foo"
+
 
 def test_fail_wrong_discriminator():
     with pytest.raises(ValueError):
