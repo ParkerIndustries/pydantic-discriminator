@@ -1,5 +1,5 @@
 [project]
-name = "pydantic-discriminator"
+name = "parker-pydantic-discriminator"
 version = "0.1.0"
 description = "Pydantic discriminators for polymorphic models"
 readme = "README.md"

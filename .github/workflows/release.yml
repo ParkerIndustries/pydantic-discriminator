@@ -9,7 +9,7 @@ jobs:
   release:
     uses: ParkerIndustries/workflows/.github/workflows/release.yml@v1
     with:
-      pypi-package-name: pydantic-discriminator # ⚠ name is taken on PyPI by upstream — rename before publishing
+      pypi-package-name: parker-pydantic-discriminator
       python-version: "3.12"
       # If your stable branch is master (not main), or your dev branch differs:
       stable-branch: main
