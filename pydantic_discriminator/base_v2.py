@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Any, TypeVar
 
-from pydantic import BaseModel, Field, TypeAdapter, model_serializer, model_validator
+from pydantic import BaseModel, Field, TypeAdapter, ValidationInfo, model_serializer, model_validator
 from pydantic._internal._model_construction import ModelMetaclass
 
 from pydantic_discriminator.common import DiscriminatedBase, Naming
@@ -46,7 +46,17 @@ class DiscriminatedBaseModel(BaseModel, DiscriminatedBase[BaseModel], metaclass=
         super().__init__(**data)
 
     @model_validator(mode="before")
+    @classmethod
+    def _validate_input_type_field(cls, v, info: ValidationInfo):
+        # validate_assignment passes __dict__ (keyed by field name) and stores the result back as is
+        if info.field_name is not None:
+            return v
+        return cls._validate_type_field(v)
+
+    @classmethod
     def _validate_type_field(cls, v):
+        if not isinstance(v, dict):
+            return v
         if Naming.TYPE_FIELD_NAME in v:
             v[Naming.TYPE_FIELD_ALIAS] = v.pop(Naming.TYPE_FIELD_NAME)
         if Naming.TYPE_FIELD_ALIAS not in v:
@@ -56,12 +66,13 @@ class DiscriminatedBaseModel(BaseModel, DiscriminatedBase[BaseModel], metaclass=
     @model_serializer
     def serializer(self):
         # since we cannot call model_dump() to avoid a RecursionError
-        return self._validate_type_field(
+        data = self._validate_type_field(
             {
                 key: TypeAdapter(field_info.annotation).validate_python(self.__dict__[key])
                 for key, field_info in self.model_fields.items()
             }
         )
+        return data | {name: getattr(self, name) for name in type(self).model_computed_fields}
 
     @classmethod
     def model_validate(

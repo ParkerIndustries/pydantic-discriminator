@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pydantic as pyd
 import pytest
 from deepdiff import DeepDiff
 from pydantic import BaseModel  # noqa: F401 — referenced only inside exec(code) test strings
@@ -539,3 +540,35 @@ def test_alias_in_constructor():
 def test_parse_invalid_stuff(parse_fn):
     with pytest.raises((ValueError, TypeError)):
         parse_fn(Circle)(1)
+
+
+@pytest.mark.skipif(not hasattr(pyd, "computed_field"), reason="computed fields require pydantic v2")
+def test_computed_fields_serialized():
+    class Labeled(DiscriminatedBaseModel):
+        name: str
+
+        @pyd.computed_field
+        @property
+        def label(self) -> str:
+            return self.name.upper()
+
+    class Tag(Labeled, discriminator="tag"): ...
+
+    dumped = Labeled.model_validate({"type": "tag", "name": "a"}).model_dump()
+    assert dumped == {"type": "tag", "name": "a", "label": "A"}
+
+
+@pytest.mark.skipif(not hasattr(pyd, "computed_field"), reason="validate_assignment check targets pydantic v2")
+def test_validate_assignment_keeps_type_field():
+    class Counter(DiscriminatedBaseModel, validate_assignment=True):
+        count: int = 0
+
+    counter = Counter()
+    counter.count = 1
+    assert counter.__dict__["type_"] == "counter"
+    assert counter.model_dump() == {"type": "counter", "count": 1}
+
+
+@pytest.mark.parametrize("value", ["scene-id", 5, None])
+def test_non_dict_input_passes_through_type_validator(value):
+    assert DiscriminatedBaseModel._validate_type_field(value) == value
