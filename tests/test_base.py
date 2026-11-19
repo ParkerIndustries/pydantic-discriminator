@@ -567,3 +567,8 @@ def test_validate_assignment_keeps_type_field():
     counter.count = 1
     assert counter.__dict__["type_"] == "counter"
     assert counter.model_dump() == {"type": "counter", "count": 1}
+
+
+@pytest.mark.parametrize("value", ["scene-id", 5, None])
+def test_non_dict_input_passes_through_type_validator(value):
+    assert DiscriminatedBaseModel._validate_type_field(value) == value

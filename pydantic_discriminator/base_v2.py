@@ -55,6 +55,8 @@ class DiscriminatedBaseModel(BaseModel, DiscriminatedBase[BaseModel], metaclass=
 
     @classmethod
     def _validate_type_field(cls, v):
+        if not isinstance(v, dict):
+            return v
         if Naming.TYPE_FIELD_NAME in v:
             v[Naming.TYPE_FIELD_ALIAS] = v.pop(Naming.TYPE_FIELD_NAME)
         if Naming.TYPE_FIELD_ALIAS not in v:
